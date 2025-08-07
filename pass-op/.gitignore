@@ -27,9 +27,4 @@ node_modules/
 .env
 dist/
 build/
-<<<<<<< HEAD
 .DS_Store
-=======
-.DS_Store
-
->>>>>>> 678a354123324a4a2192eecc4a6a268013c6c9af
