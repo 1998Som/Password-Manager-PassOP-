@@ -202,8 +202,9 @@ const Manager = () => {
       const result = await res.json();
 
       if (result.success) {
+        // Use _id for filtering after deletion
         const updatedPasswords = passwordArray.filter(
-          (item) => item.id !== deleteIndex
+          (item) => item._id !== deleteIndex
         );
         setPasswordArray(updatedPasswords);
         setShowDeleteModal(false);
