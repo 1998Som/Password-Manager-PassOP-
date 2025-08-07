@@ -1,5 +1,6 @@
 const express = require("express");
 
+
 const dotenv = require("dotenv");
 const { MongoClient } = require("mongodb");
 const bodyparser = require("body-parser");
@@ -24,7 +25,15 @@ const port = process.env.PORT || 3000;
 app.use(bodyParser.json());
 app.use(cors());
 
-client.connect();
+(async () => {
+  try {
+    await client.connect();
+    db = client.db(dbName);
+    console.log("✅ Connected to MongoDB");
+  } catch (err) {
+    console.error("❌ MongoDB connection failed:", err);
+  }
+})();
 //get a password
 app.get("/", async (req, res) => {
   const db = client.db(dbName);
@@ -88,6 +97,7 @@ app.put("/", async (req, res) => {
   }
 });
 
-app.listen(port, () => {
-  console.log(`Example app listening on port http://localhost:${port}`);
-});
+// app.listen(port, () => {
+//   console.log(`Example app listening on port http://localhost:${port}`);
+// });
+module.exports = app;
