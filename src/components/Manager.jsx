@@ -36,7 +36,7 @@ const Manager = () => {
   const getPasswords = async () => {
     try {
       // Fetch data from backend (MongoDB)
-      let req = await fetch("https://railway.com/project/e64308e0-b929-44b8-b756-df7d8632c0d7/service/f1a71a68-031a-4857-8425-1f404a37ad85?environmentId=ef43a825-b3bd-47ef-9170-397cc2968ea5&id=ee4434a3-e869-4942-8c4a-0b47f060e457#deploy");
+      let req = await fetch("https://password-manager-backend-passop-1.onrender.com");
       let passwords = await req.json(); // Parse the response into JavaScript array
 
       // Check if the response is a valid array
