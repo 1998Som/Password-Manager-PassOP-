@@ -38,7 +38,7 @@ const Manager = () => {
       // Fetch data from backend (MongoDB)
       let req = await fetch("https://password-manager-backend-passop.onrender.com");
       let passwords = await req.json(); // Parse the response into JavaScript array
-
+                          //https://password-manager-backend-passop.onrender.com
       // Check if the response is a valid array
       if (passwords && Array.isArray(passwords)) {
         // Filter out invalid or incomplete entries
@@ -93,7 +93,7 @@ const Manager = () => {
       setPasswordArray(updatedPasswords);
 
       // Update in backend
-      await fetch("http://localhost:3000/", {
+      await fetch("https://password-manager-backend-passop.onrender.com/", {
         method: "PUT",
         headers: {
           "Content-Type": "application/json",
@@ -117,7 +117,7 @@ const Manager = () => {
       setPasswordArray(updatedList);
 
       // Send new password to backend
-      let res = fetch("http://localhost:3000/", {
+      let res = fetch("https://password-manager-backend-passop.onrender.com/", {
         method: "POST",
         body: JSON.stringify(newEntry),
         headers: {
@@ -191,7 +191,7 @@ const Manager = () => {
   // Confirm and delete password
   const confirmDelete = async () => {
     try {
-      const res = await fetch("http://localhost:3000/", {
+      const res = await fetch("https://password-manager-backend-passop.onrender.com/", {
         method: "DELETE",
         headers: {
           "Content-Type": "application/json",
