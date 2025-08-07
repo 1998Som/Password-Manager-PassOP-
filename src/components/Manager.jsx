@@ -196,7 +196,7 @@ const Manager = () => {
         headers: {
           "Content-Type": "application/json",
         },
-        body: JSON.stringify({ id: deleteIndex }),
+        body: JSON.stringify({ _id: deleteIndex }),
       });
 
       const result = await res.json();
