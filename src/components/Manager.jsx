@@ -124,7 +124,7 @@ const Manager = () => {
         body: JSON.stringify(form),
       });
 
-      setForm({ site: "", username: "", password: "" });
+      setform({ site: "", username: "", password: "" });
       toast.success("✅ Password saved successfully!", {
         position: "top-right",
         autoClose: 3000,
