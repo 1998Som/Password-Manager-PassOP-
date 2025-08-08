@@ -36,9 +36,11 @@ const Manager = () => {
   const getPasswords = async () => {
     try {
       // Fetch data from backend (MongoDB)
-      let req = await fetch("https://password-manager-backend-passop.onrender.com");
+      let req = await fetch(
+        "https://password-manager-backend-passop.onrender.com"
+      );
       let passwords = await req.json(); // Parse the response into JavaScript array
-                          //https://password-manager-backend-passop.onrender.com
+      //https://password-manager-backend-passop.onrender.com
       // Check if the response is a valid array
       if (passwords && Array.isArray(passwords)) {
         // Filter out invalid or incomplete entries
@@ -86,49 +88,44 @@ const Manager = () => {
     }
 
     if (editingIndex !== null) {
-      // Update existing password
+      // ✅ FIX: Use _id instead of id for MongoDB documents
       const updatedPasswords = passwordArray.map((item) =>
-        item.id === editingIndex ? { ...form, id: item.id } : item
+        item._id === editingIndex ? { ...form, _id: item._id } : item
       );
       setPasswordArray(updatedPasswords);
 
       // Update in backend
-     await fetch("https://password-manager-backend-passop.onrender.com/", {
-  method: "PUT",
-  headers: {
-    "Content-Type": "application/json",
-  },
-  body: JSON.stringify({ ...form, _id: editingIndex }), // send _id not id
-});
+      await fetch("https://password-manager-backend-passop.onrender.com/", {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ ...form, _id: editingIndex }), // ✅ send _id instead of id
+      });
 
-      // Clear form and editing state
       setEditingIndex(null);
-      setform({ site: "", username: "", password: "" });
-
-      toast.info("✅ Password updated successfully!", {
+      setForm({ site: "", username: "", password: "" });
+      toast.success("✅ Password updated successfully!", {
         position: "top-right",
         autoClose: 3000,
         theme: "colored",
       });
     } else {
       // Add new password
-      const newEntry = { ...form, id: uuidv4() }; // Create new object with UUID
-      const updatedList = [...passwordArray, newEntry];
-      setPasswordArray(updatedList);
+      const newPassword = { ...form, _id: Date.now().toString() };
+      setPasswordArray([...passwordArray, newPassword]);
 
-      // Send new password to backend
-      let res = fetch("https://password-manager-backend-passop.onrender.com/", {
+      // Save in backend
+      await fetch("https://password-manager-backend-passop.onrender.com/", {
         method: "POST",
-        body: JSON.stringify(newEntry),
         headers: {
           "Content-Type": "application/json",
         },
+        body: JSON.stringify(form),
       });
 
-      // Clear form fields
-      setform({ site: "", username: "", password: "" });
-
-      toast.info("✅ Password saved successfully!", {
+      setForm({ site: "", username: "", password: "" });
+      toast.success("✅ Password saved successfully!", {
         position: "top-right",
         autoClose: 3000,
         theme: "colored",
@@ -161,72 +158,66 @@ const Manager = () => {
 
   // Load a password entry into form for editing
   const handleEdit = (_id) => {
-  const targetItem = passwordArray.find((item) => item._id === _id);
-  if (!targetItem) {
-    toast.error("❌ Password not found for editing.");
-    return;
-  }
+    const targetItem = passwordArray.find((item) => item._id === _id);
+    if (!targetItem) {
+      toast.error("❌ Password not found for editing.");
+      return;
+    }
 
-  setform({
-    site: targetItem.site,
-    username: targetItem.username,
-    password: targetItem.password,
-  });
-
-  setEditingIndex(_id); // store MongoDB _id
-  toast.info("✏️ Password loaded for editing!", {
-    position: "top-right",
-    autoClose: 3000,
-    theme: "colored",
-  });
-};
-
-  // Show modal to confirm delete
- const handleDelete = (_id) => {
-  setDeleteIndex(_id); // store MongoDB _id
-  setShowDeleteModal(true);
-};
-  // Confirm and delete password
-const confirmDelete = async () => {
-  try {
-    const res = await fetch("https://password-manager-backend-passop.onrender.com/", {
-      method: "DELETE",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({ _id: deleteIndex }), // send MongoDB _id
+    setform({
+      site: targetItem.site,
+      username: targetItem.username,
+      password: targetItem.password,
     });
 
-    const result = await res.json();
+    setEditingIndex(_id); // store MongoDB _id
+    toast.info("✏️ Password loaded for editing!", {
+      position: "top-right",
+      autoClose: 3000,
+      theme: "colored",
+    });
+  };
 
-    if (result.success) {
-      const updatedPasswords = passwordArray.filter(
-        (item) => item._id !== deleteIndex
+  // Show modal to confirm delete
+  const handleDelete = (mongoId) => {
+    setDeleteIndex(mongoId); // This will store Mongo _id
+    setShowDeleteModal(true);
+  };
+
+  const confirmDelete = async () => {
+    try {
+      const res = await fetch(
+        "https://password-manager-backend-passop.onrender.com/",
+        {
+          method: "DELETE",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ _id: deleteIndex }), // ✅ send MongoDB _id
+        }
       );
-      setPasswordArray(updatedPasswords);
+
+      const result = await res.json();
+
+      if (result.success) {
+        setPasswordArray(
+          passwordArray.filter((item) => item._id !== deleteIndex)
+        );
+        toast.success("✅ Password deleted!");
+      } else {
+        toast.error(result.message || "❌ Failed to delete password!");
+      }
+    } catch (error) {
+      toast.error("❌ Error deleting password!");
+    } finally {
       setShowDeleteModal(false);
       setDeleteIndex(null);
-      toast.error("🗑️ Password deleted!", {
-        position: "top-right",
-        autoClose: 3000,
-        theme: "colored",
-      });
-    } else {
-      toast.error("❌ Failed to delete password!");
     }
-  } catch (error) {
-    console.error("Delete error:", error);
-    toast.error("❌ Error deleting password!");
-  }
-};
+  };
 
   // Cancel delete modal
   const cancelDelete = () => {
     setShowDeleteModal(false);
     setDeleteIndex(null);
   };
-
-  
 
   return (
     <>
@@ -439,14 +430,14 @@ const confirmDelete = async () => {
                         <td className="px-3 sm:px-6 py-4 whitespace-nowrap">
                           <div className="flex items-center gap-1 sm:gap-2">
                             <button
-                              onClick={() => handleEdit(item.id)}
+                              onClick={() => handleEdit(item._id)}
                               className="p-1 sm:p-2 rounded bg-blue-600/70 hover:bg-blue-500/80 transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-blue-400/40"
                               title="Edit password"
                             >
                               <FaEdit className="text-white text-xs sm:text-sm" />
                             </button>
                             <button
-                              onClick={() => handleDelete(item.id)}
+                              onClick={() => handleDelete(item._id)}
                               className="p-1 sm:p-2 rounded bg-red-600/70 hover:bg-red-500/80 transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-red-400/40"
                               title="Delete password"
                             >
