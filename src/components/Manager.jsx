@@ -104,8 +104,8 @@ const Manager = () => {
       });
 
       setEditingIndex(null);
-      setForm({ site: "", username: "", password: "" });
-      toast.success("✅ Password updated successfully!", {
+      setform({ site: "", username: "", password: "" });
+      toast.info("✅ Password updated successfully!", {
         position: "top-right",
         autoClose: 3000,
         theme: "colored",
