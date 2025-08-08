@@ -93,13 +93,13 @@ const Manager = () => {
       setPasswordArray(updatedPasswords);
 
       // Update in backend
-      await fetch("https://password-manager-backend-passop.onrender.com/", {
-        method: "PUT",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({ ...form, id: editingIndex }),
-      });
+     await fetch("https://password-manager-backend-passop.onrender.com/", {
+  method: "PUT",
+  headers: {
+    "Content-Type": "application/json",
+  },
+  body: JSON.stringify({ ...form, _id: editingIndex }), // send _id not id
+});
 
       // Clear form and editing state
       setEditingIndex(null);
@@ -160,69 +160,65 @@ const Manager = () => {
   };
 
   // Load a password entry into form for editing
-  const handleEdit = (id) => {
-    const targetItem = passwordArray.find((item) => item.id === id);
-    if (!targetItem) {
-      toast.error("❌ Password not found for editing.");
-      return;
-    }
+  const handleEdit = (_id) => {
+  const targetItem = passwordArray.find((item) => item._id === _id);
+  if (!targetItem) {
+    toast.error("❌ Password not found for editing.");
+    return;
+  }
 
-    setform({
-      site: targetItem.site,
-      username: targetItem.username,
-      password: targetItem.password,
-    });
+  setform({
+    site: targetItem.site,
+    username: targetItem.username,
+    password: targetItem.password,
+  });
 
-    setEditingIndex(id);
-
-    toast.info("✏️ Password loaded for editing!", {
-      position: "top-right",
-      autoClose: 3000,
-      theme: "colored",
-    });
-  };
+  setEditingIndex(_id); // store MongoDB _id
+  toast.info("✏️ Password loaded for editing!", {
+    position: "top-right",
+    autoClose: 3000,
+    theme: "colored",
+  });
+};
 
   // Show modal to confirm delete
-  const handleDelete = (id) => {
-    setDeleteIndex(id);
-    setShowDeleteModal(true);
-  };
-
+ const handleDelete = (_id) => {
+  setDeleteIndex(_id); // store MongoDB _id
+  setShowDeleteModal(true);
+};
   // Confirm and delete password
-  const confirmDelete = async () => {
-    try {
-      const res = await fetch("https://password-manager-backend-passop.onrender.com/", {
-        method: "DELETE",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({ _id: deleteIndex }),
+const confirmDelete = async () => {
+  try {
+    const res = await fetch("https://password-manager-backend-passop.onrender.com/", {
+      method: "DELETE",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({ _id: deleteIndex }), // send MongoDB _id
+    });
+
+    const result = await res.json();
+
+    if (result.success) {
+      const updatedPasswords = passwordArray.filter(
+        (item) => item._id !== deleteIndex
+      );
+      setPasswordArray(updatedPasswords);
+      setShowDeleteModal(false);
+      setDeleteIndex(null);
+      toast.error("🗑️ Password deleted!", {
+        position: "top-right",
+        autoClose: 3000,
+        theme: "colored",
       });
-
-      const result = await res.json();
-
-      if (result.success) {
-        // Use _id for filtering after deletion
-        const updatedPasswords = passwordArray.filter(
-          (item) => item._id !== deleteIndex
-        );
-        setPasswordArray(updatedPasswords);
-        setShowDeleteModal(false);
-        setDeleteIndex(null);
-
-        toast.error("🗑️ Password deleted!", {
-          position: "top-right",
-          autoClose: 3000,
-          theme: "colored",
-        });
-      } else {
-        toast.error("❌ Failed to delete password!");
-      }
-    } catch (error) {
-      console.error("Delete error:", error);
-      toast.error("❌ Error deleting password!");
+    } else {
+      toast.error("❌ Failed to delete password!");
     }
-  };
+  } catch (error) {
+    console.error("Delete error:", error);
+    toast.error("❌ Error deleting password!");
+  }
+};
 
   // Cancel delete modal
   const cancelDelete = () => {
@@ -230,7 +226,7 @@ const Manager = () => {
     setDeleteIndex(null);
   };
 
-  // (UI code continues as-is... you already have clear layout and good structure)
+  
 
   return (
     <>
