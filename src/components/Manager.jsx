@@ -180,19 +180,15 @@ const Manager = () => {
 
   // Show modal to confirm delete
   const handleDelete = (mongoId) => {
-    setDeleteIndex(mongoId); // This will store Mongo _id
+    setDeleteIndex(mongoId);
     setShowDeleteModal(true);
   };
 
   const confirmDelete = async () => {
     try {
       const res = await fetch(
-        "https://password-manager-backend-passop.onrender.com/",
-        {
-          method: "DELETE",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ _id: deleteIndex }), // ✅ send MongoDB _id
-        }
+        `https://password-manager-backend-passop.onrender.com/${deleteIndex}`,
+        { method: "DELETE" }
       );
 
       const result = await res.json();
@@ -205,7 +201,7 @@ const Manager = () => {
           position: "top-right",
           autoClose: 3000,
           theme: "colored",
-        });;
+        });
       } else {
         toast.error(result.message || "❌ Failed to delete password!");
       }
