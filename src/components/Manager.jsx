@@ -187,8 +187,12 @@ const Manager = () => {
   const confirmDelete = async () => {
     try {
       const res = await fetch(
-        `https://password-manager-backend-passop.onrender.com/${deleteIndex}`,
-        { method: "DELETE" }
+        "https://password-manager-backend-passop.onrender.com/",
+        {
+          method: "DELETE",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ _id: deleteIndex }),
+        }
       );
 
       const result = await res.json();
