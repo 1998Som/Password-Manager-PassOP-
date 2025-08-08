@@ -201,7 +201,11 @@ const Manager = () => {
         setPasswordArray(
           passwordArray.filter((item) => item._id !== deleteIndex)
         );
-        toast.success("✅ Password deleted!");
+        toast.success("✅ Password deleted!", {
+          position: "top-right",
+          autoClose: 3000,
+          theme: "colored",
+        });;
       } else {
         toast.error(result.message || "❌ Failed to delete password!");
       }
