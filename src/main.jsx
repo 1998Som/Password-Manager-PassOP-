@@ -4,14 +4,16 @@ import './index.css'
 import App from './App.jsx'
 import { ClerkProvider } from '@clerk/clerk-react'
 
-const PUBLISHABLE_KEY = import.meta.env.VITE_CLERK_PUBLISHABLE_KEY
-console.log('Environment variables:', {
-  PUBLISHABLE_KEY: PUBLISHABLE_KEY,
-  ALL_ENV: import.meta.env
+// Try to get the key from different possible sources
+const PUBLISHABLE_KEY = import.meta.env.VITE_CLERK_PUBLISHABLE_KEY || 
+                       import.meta.env.CLERK_PUBLISHABLE_KEY ||
+                       'pk_test_Y29udGVudC1raW5nZmlzaC03NS5jbGVyay5hY2NvdW50cy5kZXYk';
+
+console.log('Environment check:', {
+  mode: import.meta.env.MODE,
+  key: PUBLISHABLE_KEY ? 'Found' : 'Missing',
+  env: import.meta.env
 });
-if (!PUBLISHABLE_KEY) {
-  throw new Error("Missing Clerk Publishable Key. Please check your .env file")
-}
 
 createRoot(document.getElementById('root')).render(
   <StrictMode>
