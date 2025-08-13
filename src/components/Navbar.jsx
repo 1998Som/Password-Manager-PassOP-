@@ -1,5 +1,6 @@
 import React, { useState } from "react";
 import { FaLock, FaGithub, FaBars, FaTimes } from "react-icons/fa";
+import { SignedIn, SignedOut, SignInButton, SignUpButton, UserButton } from "@clerk/clerk-react";
 
 const Navbar = () => {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
@@ -20,7 +21,7 @@ const Navbar = () => {
 
             {/* Desktop Navigation */}
             <div className="hidden md:flex items-center gap-4 lg:gap-6">
-              <ul className="flex gap-6 lg:gap-10 text-base lg:text-lg font-semibold">
+              <ul className="flex gap-6 lg:gap-10 text-base lg:text-lg font-semibold items-center">
                 <li>
                   <a
                     className="px-3 lg:px-5 py-2 rounded-lg transition-all duration-200 bg-gradient-to-r from-blue-500/10 via-purple-400/10 to-pink-400/10 hover:from-blue-500/30 hover:to-pink-400/30 hover:text-blue-200 focus:outline-none focus:ring-2 focus:ring-blue-300/40 shadow-md"
@@ -29,33 +30,36 @@ const Navbar = () => {
                     Home
                   </a>
                 </li>
-                <li>
-                  <a
-                    className="px-3 lg:px-5 py-2 rounded-lg transition-all duration-200 bg-gradient-to-r from-blue-500/10 via-purple-400/10 to-pink-400/10 hover:from-blue-500/30 hover:to-pink-400/30 hover:text-blue-200 focus:outline-none focus:ring-2 focus:ring-blue-300/40 shadow-md"
-                    href=""
-                  >
-                    About
-                  </a>
-                </li>
-                <li>
-                  <a
-                    className="px-3 lg:px-5 py-2 rounded-lg transition-all duration-200 bg-gradient-to-r from-blue-500/10 via-purple-400/10 to-pink-400/10 hover:from-blue-500/30 hover:to-pink-400/30 hover:text-blue-200 focus:outline-none focus:ring-2 focus:ring-blue-300/40 shadow-md"
-                    href=""
-                  >
-                    Contact
-                  </a>
-                </li>
               </ul>
+              
               <a
                 href="https://github.com/1998Som/Password-Manager-PassOP-"
                 target="_blank"
                 rel="noopener noreferrer"
-                className="ml-2 lg:ml-4 flex items-center gap-2 px-3 lg:px-4 py-2 rounded-lg bg-gradient-to-r from-gray-800 via-gray-700 to-gray-900 text-white font-bold shadow-md hover:from-blue-700 hover:to-purple-700 transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-blue-400/40"
+                className="flex items-center gap-2 px-3 lg:px-4 py-2 rounded-lg bg-gradient-to-r from-gray-800 via-gray-700 to-gray-900 text-white font-bold shadow-md hover:from-blue-700 hover:to-purple-700 transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-blue-400/40"
                 title="View on GitHub"
               >
                 <FaGithub className="text-lg lg:text-2xl" />
                 <span className="hidden lg:inline">GitHub</span>
               </a>
+
+              <SignedOut>
+                <div className="flex items-center gap-4">
+                  <SignInButton mode="modal">
+                    <button className="px-4 py-2 rounded-lg transition-all duration-200 bg-blue-500 hover:bg-blue-600 text-white font-semibold">
+                      Sign In
+                    </button>
+                  </SignInButton>
+                  <SignUpButton mode="modal">
+                    <button className="px-4 py-2 rounded-lg transition-all duration-200 bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-600 hover:to-pink-600 text-white font-semibold">
+                      Sign Up
+                    </button>
+                  </SignUpButton>
+                </div>
+              </SignedOut>
+              <SignedIn>
+                <UserButton afterSignOutUrl="/" />
+              </SignedIn>
             </div>
 
             {/* Mobile Menu Button */}
@@ -74,7 +78,7 @@ const Navbar = () => {
           {/* Mobile Navigation */}
           {isMobileMenuOpen && (
             <div className="md:hidden mt-4 pb-4">
-              <ul className="flex flex-col gap-2">
+              <ul className="flex flex-col gap-4">
                 <li>
                   <a
                     className="block px-4 py-3 rounded-lg transition-all duration-200 bg-gradient-to-r from-blue-500/10 via-purple-400/10 to-pink-400/10 hover:from-blue-500/30 hover:to-pink-400/30 hover:text-blue-200 focus:outline-none focus:ring-2 focus:ring-blue-300/40 shadow-md"
@@ -85,32 +89,35 @@ const Navbar = () => {
                 </li>
                 <li>
                   <a
-                    className="block px-4 py-3 rounded-lg transition-all duration-200 bg-gradient-to-r from-blue-500/10 via-purple-400/10 to-pink-400/10 hover:from-blue-500/30 hover:to-pink-400/30 hover:text-blue-200 focus:outline-none focus:ring-2 focus:ring-blue-300/40 shadow-md"
-                    href=""
-                  >
-                    About
-                  </a>
-                </li>
-                <li>
-                  <a
-                    className="block px-4 py-3 rounded-lg transition-all duration-200 bg-gradient-to-r from-blue-500/10 via-purple-400/10 to-pink-400/10 hover:from-blue-500/30 hover:to-pink-400/30 hover:text-blue-200 focus:outline-none focus:ring-2 focus:ring-blue-300/40 shadow-md"
-                    href=""
-                  >
-                    Contact
-                  </a>
-                </li>
-                <li>
-                  <a
                     href="https://github.com/1998Som/Password-Manager-PassOP-"
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="ml-2 lg:ml-4 flex items-center gap-2 px-3 lg:px-4 py-2 rounded-lg bg-gradient-to-r from-gray-800 via-gray-700 to-gray-900 text-white font-bold shadow-md hover:from-blue-700 hover:to-purple-700 transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-blue-400/40"
+                    className="flex items-center justify-center gap-2 px-4 py-3 rounded-lg bg-gradient-to-r from-gray-800 via-gray-700 to-gray-900 text-white font-bold shadow-md hover:from-blue-700 hover:to-purple-700 transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-blue-400/40"
                     title="View on GitHub"
                   >
-                    <FaGithub className="text-lg lg:text-2xl" />
-                    <span className="hidden lg:inline">GitHub</span>
+                    <FaGithub className="text-xl" />
+                    <span>GitHub</span>
                   </a>
                 </li>
+                <SignedOut>
+                  <li className="flex flex-col gap-2">
+                    <SignInButton mode="modal">
+                      <button className="w-full px-4 py-3 rounded-lg transition-all duration-200 bg-blue-500 hover:bg-blue-600 text-white font-semibold">
+                        Sign In
+                      </button>
+                    </SignInButton>
+                    <SignUpButton mode="modal">
+                      <button className="w-full px-4 py-3 rounded-lg transition-all duration-200 bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-600 hover:to-pink-600 text-white font-semibold">
+                        Sign Up
+                      </button>
+                    </SignUpButton>
+                  </li>
+                </SignedOut>
+                <SignedIn>
+                  <li className="flex justify-center">
+                    <UserButton afterSignOutUrl="/" />
+                  </li>
+                </SignedIn>
               </ul>
             </div>
           )}

@@ -3,6 +3,8 @@ import React, { useState, useEffect } from "react";
 import { ToastContainer, toast, Bounce } from "react-toastify";
 // UUID for generating unique IDs
 import { v4 as uuidv4 } from "uuid";
+// Clerk for user authentication
+import { useUser } from "@clerk/clerk-react";
 // Icons from react-icons
 import {
   FaUser,
@@ -16,7 +18,10 @@ import {
   FaEdit,
 } from "react-icons/fa";
 
+const API_BASE_URL = "https://password-manager-backend-passop.onrender.com";
+
 const Manager = () => {
+  const { user, isLoaded, isSignedIn } = useUser();
   // State to toggle show/hide password
   const [showPassword, setShowPassword] = useState(false);
   // State to manage form fields
@@ -32,46 +37,119 @@ const Manager = () => {
   // Controls visibility of delete confirmation modal
   const [showDeleteModal, setShowDeleteModal] = useState(false);
 
+  if (!isLoaded) {
+    return <div>Loading...</div>;
+  }
+
+  if (!isSignedIn || !user?.id) {
+    return <div>Please sign in to access your passwords.</div>;
+  }
+
+  const getHeaders = () => ({
+    'Content-Type': 'application/json',
+    'X-User-Id': user?.id
+  });
+
+  const fetchApi = async (method, body = null) => {
+    if (!isSignedIn || !user?.id) {
+      throw new Error('User not authenticated');
+    }
+
+    try {
+      const options = {
+        method,
+        headers: getHeaders(),
+        mode: 'cors'
+      };
+
+      if (body) {
+        options.body = JSON.stringify({
+          ...body,
+          userId: user.id
+        });
+      }
+
+      // Using the root endpoint as that's what your backend exposes
+      const response = await fetch(API_BASE_URL, options);
+      if (!response.ok) {
+        throw new Error(`API call failed: ${response.status}`);
+      }
+      const data = await response.json();
+      
+      // Filter data for current user
+      if (Array.isArray(data)) {
+        return data.filter(item => item.userId === user.id);
+      }
+      return data;
+    } catch (error) {
+      console.error('API call failed:', error);
+      throw error;
+    }
+  };
+
   // Fetch passwords from backend when component mounts
   const getPasswords = async () => {
+    if (!isSignedIn || !user?.id) {
+      console.log('No authenticated user, skipping password fetch');
+      setPasswordArray([]);
+      return;
+    }
+    
     try {
-      // Fetch data from backend (MongoDB)
-      let req = await fetch(
-        "https://password-manager-backend-passop.onrender.com"
-      );
-      let passwords = await req.json(); // Parse the response into JavaScript array
-      //https://password-manager-backend-passop.onrender.com
-      // Check if the response is a valid array
-      if (passwords && Array.isArray(passwords)) {
-        // Filter out invalid or incomplete entries
-        const validPasswords = passwords.filter(
+      console.log('Fetching passwords for user:', user.id);
+      const data = await fetchApi('GET');
+      
+      if (Array.isArray(data)) {
+        // Filter passwords to only include those belonging to current user
+        // and ensure they have all required fields
+        const validPasswords = data.filter(
           (item) =>
             item &&
             typeof item === "object" &&
+            item.userId === user.id && // Strict user check
             item.site &&
             item.username &&
             item.password
         );
-
-        // Save the valid entries into React state
+        console.log('Filtered passwords for current user:', validPasswords.length);
         setPasswordArray(validPasswords);
       } else {
-        throw new Error("Invalid data received from backend");
+        console.error('Invalid data format received:', data);
+        setPasswordArray([]);
       }
     } catch (error) {
-      console.error("Error loading passwords:", error);
-      // In case of error, clear state (optional)
+      console.error('Error loading passwords:', error);
+      toast.error('Failed to load passwords. Please try again.', {
+        position: "top-right",
+        autoClose: 3000,
+        theme: "colored"
+      });
       setPasswordArray([]);
     }
   };
 
-  // Fetch passwords only once on first render
+  // Fetch passwords when authentication state changes
   useEffect(() => {
-    getPasswords();
-  }, []);
+    if (isLoaded && isSignedIn && user?.id) {
+      console.log('User authenticated, fetching passwords');
+      getPasswords();
+    } else {
+      console.log('User not authenticated, clearing passwords');
+      setPasswordArray([]); // Clear passwords when not authenticated
+    }
+  }, [isLoaded, isSignedIn, user?.id]);
 
   // Save or update password
   const handleSavePassword = async () => {
+    if (!isSignedIn || !user?.id) {
+      toast.error("❌ Please sign in to save passwords!", {
+        position: "top-right",
+        autoClose: 3000,
+        theme: "colored",
+      });
+      return;
+    }
+
     // Input validation
     if (!form.site.trim() || !form.username.trim() || !form.password.trim()) {
       toast.error("❌ Please fill in all fields before saving!", {
@@ -88,20 +166,14 @@ const Manager = () => {
     }
 
     if (editingIndex !== null) {
-      // ✅ FIX: Use _id instead of id for MongoDB documents
+      // Update existing password in backend
       const updatedPasswords = passwordArray.map((item) =>
         item._id === editingIndex ? { ...form, _id: item._id } : item
       );
       setPasswordArray(updatedPasswords);
 
       // Update in backend
-      await fetch("https://password-manager-backend-passop.onrender.com/", {
-        method: "PUT",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({ ...form, _id: editingIndex }), // ✅ send _id instead of id
-      });
+      await fetchApi("PUT", { ...form, _id: editingIndex });
 
       setEditingIndex(null);
       setform({ site: "", username: "", password: "" });
@@ -116,13 +188,7 @@ const Manager = () => {
       setPasswordArray([...passwordArray, newPassword]);
 
       // Save in backend
-      await fetch("https://password-manager-backend-passop.onrender.com/", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify(form),
-      });
+      await fetchApi("POST", { ...form });
 
       setform({ site: "", username: "", password: "" });
       toast.success("✅ Password saved successfully!", {
@@ -134,7 +200,7 @@ const Manager = () => {
   };
 
   // Update form fields as user types
-  const handelChange = (e) => {
+  const handleChange = (e) => {
     setform({ ...form, [e.target.name]: e.target.value });
   };
 
@@ -186,14 +252,7 @@ const Manager = () => {
 
   const confirmDelete = async () => {
     try {
-      const res = await fetch(
-        "https://password-manager-backend-passop.onrender.com/",
-        {
-          method: "DELETE",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ _id: deleteIndex }),
-        }
-      );
+      const res = await fetchApi("DELETE", { _id: deleteIndex });
 
       const result = await res.json();
 
@@ -257,7 +316,7 @@ const Manager = () => {
               </span>
               <input
                 value={form.site}
-                onChange={handelChange}
+                onChange={handleChange}
                 type="text"
                 name="site"
                 className="pl-10 pr-4 py-3 w-full rounded-lg bg-white/20 text-white placeholder-white/70 focus:outline-none focus:ring-2 focus:ring-blue-400 transition-all duration-200 shadow-inner text-sm sm:text-base"
@@ -271,7 +330,7 @@ const Manager = () => {
                 </span>
                 <input
                   value={form.username}
-                  onChange={handelChange}
+                  onChange={handleChange}
                   type="text"
                   name="username"
                   className="pl-10 pr-4 py-3 w-full rounded-lg bg-white/20 text-white placeholder-white/70 focus:outline-none focus:ring-2 focus:ring-blue-400 transition-all duration-200 shadow-inner text-sm sm:text-base"
@@ -284,7 +343,7 @@ const Manager = () => {
                 </span>
                 <input
                   value={form.password}
-                  onChange={handelChange}
+                  onChange={handleChange}
                   type={showPassword ? "text" : "password"}
                   name="password"
                   className="pl-10 pr-12 py-3 w-full rounded-lg bg-white/20 text-white placeholder-white/70 focus:outline-none focus:ring-2 focus:ring-blue-400 transition-all duration-200 shadow-inner text-sm sm:text-base"
@@ -326,6 +385,7 @@ const Manager = () => {
                   </th>
                   <th className="px-3 sm:px-6 py-3 text-left text-xs font-bold uppercase tracking-wider">
                     Password
+                    
                   </th>
                   <th className="px-3 sm:px-6 py-3 text-left text-xs font-bold uppercase tracking-wider">
                     Actions
@@ -429,6 +489,7 @@ const Manager = () => {
                                 <FaCopy className="text-white text-xs sm:text-sm" />
                               )}
                             </button>
+                            
                           </div>
                         </td>
                         <td className="px-3 sm:px-6 py-4 whitespace-nowrap">
@@ -460,16 +521,25 @@ const Manager = () => {
 
       {/* Delete Confirmation Modal */}
       {showDeleteModal && (
-        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50">
-          <div className="bg-white/10 backdrop-blur-lg rounded-xl shadow-2xl p-6 max-w-md w-full mx-4 border border-white/20">
+        <div 
+          className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50"
+          onClick={(e) => e.target === e.currentTarget && cancelDelete()}
+          role="dialog"
+          aria-labelledby="modal-title"
+          aria-describedby="modal-description"
+        >
+          <div 
+            className="bg-white/10 backdrop-blur-lg rounded-xl shadow-2xl p-6 max-w-md w-full mx-4 border border-white/20"
+            role="alertdialog"
+          >
             <div className="text-center">
               <div className="mx-auto flex items-center justify-center h-12 w-12 rounded-full bg-red-100 mb-4">
-                <FaTrash className="h-6 w-6 text-red-600" />
+                <FaTrash className="h-6 w-6 text-red-600" aria-hidden="true" />
               </div>
-              <h3 className="text-lg font-medium text-white mb-2">
+              <h3 id="modal-title" className="text-lg font-medium text-white mb-2">
                 Delete Password
               </h3>
-              <p className="text-white/70 mb-6">
+              <p id="modal-description" className="text-white/70 mb-6">
                 Are you sure you want to delete this password? This action
                 cannot be undone.
               </p>
@@ -477,6 +547,7 @@ const Manager = () => {
                 <button
                   onClick={cancelDelete}
                   className="px-4 py-2 rounded-lg bg-gray-600/70 hover:bg-gray-500/80 text-white font-medium transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-gray-400/40"
+                  autoFocus
                 >
                   Cancel
                 </button>
