@@ -70,11 +70,24 @@ const Manager = () => {
         });
       }
 
-      // Using the root endpoint as that's what your backend exposes
+      console.log(`Making ${method} request with:`, {
+        url: API_BASE_URL,
+        options: {
+          ...options,
+          headers: { ...options.headers },
+          body: options.body ? JSON.parse(options.body) : undefined
+        }
+      });
+
       const response = await fetch(API_BASE_URL, options);
       if (!response.ok) {
         throw new Error(`API call failed: ${response.status}`);
       }
+      
+      if (method === 'DELETE') {
+        return { success: response.ok };
+      }
+      
       const data = await response.json();
       console.log('Received data from server:', data);
       return data;
@@ -248,31 +261,60 @@ const Manager = () => {
   };
 
   // Show modal to confirm delete
-  const handleDelete = (mongoId) => {
-    setDeleteIndex(mongoId);
+  const handleDelete = (passwordId) => {
+    console.log('Attempting to delete password with ID:', passwordId);
+    // Convert to string if it's an ObjectId
+    const idToDelete = typeof passwordId === 'object' ? passwordId.toString() : passwordId;
+    setDeleteIndex(idToDelete);
     setShowDeleteModal(true);
   };
 
   const confirmDelete = async () => {
     try {
-      const res = await fetchApi("DELETE", { _id: deleteIndex });
+      if (!deleteIndex) {
+        throw new Error("No password selected for deletion");
+      }
 
-      const result = await res.json();
+      console.log('Deleting password with ID:', deleteIndex);
+
+      // Send delete request
+      const options = {
+        method: 'DELETE',
+        headers: {
+          ...getHeaders(),
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ 
+          _id: deleteIndex,
+          userId: user.id
+        })
+      };
+
+      const response = await fetch(API_BASE_URL, options);
+      const result = await response.json();
 
       if (result.success) {
-        setPasswordArray(
-          passwordArray.filter((item) => item._id !== deleteIndex)
+        setPasswordArray(prevPasswords => 
+          prevPasswords.filter(item => item._id !== deleteIndex)
         );
-        toast.success("✅ Password deleted!", {
+        toast.success("✅ Password deleted successfully!", {
           position: "top-right",
           autoClose: 3000,
           theme: "colored",
         });
+
+        // Refresh the password list
+        getPasswords();
       } else {
-        toast.error(result.message || "❌ Failed to delete password!");
+        throw new Error(result.message || "Failed to delete password");
       }
     } catch (error) {
-      toast.error("❌ Error deleting password!");
+      console.error("Delete error:", error);
+      toast.error(`❌ ${error.message || "Error deleting password"}`, {
+        position: "top-right",
+        autoClose: 3000,
+        theme: "colored",
+      });
     } finally {
       setShowDeleteModal(false);
       setDeleteIndex(null);
