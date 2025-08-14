@@ -1,5 +1,7 @@
 {
   "version": 2,
+  "buildCommand": "npm run build",
+  "outputDirectory": "dist",
   "routes": [
     {
       "handle": "filesystem"
@@ -12,8 +14,4 @@
   "env": {
     "VITE_CLERK_PUBLISHABLE_KEY": "pk_test_Y29udGVudC1raW5nZmlzaC03NS5jbGVyay5hY2NvdW50cy5kZXYk"
   }
-}
-  ],
-  "buildCommand": "npm run build",
-  "outputDirectory": "dist"
 }
