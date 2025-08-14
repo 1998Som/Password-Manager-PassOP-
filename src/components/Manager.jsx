@@ -59,7 +59,8 @@ const Manager = () => {
       const options = {
         method,
         headers: getHeaders(),
-        mode: 'cors'
+        mode: 'cors',
+        credentials: 'same-origin'
       };
 
       if (body) {
@@ -75,11 +76,7 @@ const Manager = () => {
         throw new Error(`API call failed: ${response.status}`);
       }
       const data = await response.json();
-      
-      // Filter data for current user
-      if (Array.isArray(data)) {
-        return data.filter(item => item.userId === user.id);
-      }
+      console.log('Received data from server:', data);
       return data;
     } catch (error) {
       console.error('API call failed:', error);
@@ -166,14 +163,18 @@ const Manager = () => {
     }
 
     if (editingIndex !== null) {
-      // Update existing password in backend
+      // Update in backend first
+      const updatedPassword = await fetchApi("PUT", { 
+        ...form, 
+        _id: editingIndex,
+        userId: user.id 
+      });
+
+      // Update local state with the response from backend
       const updatedPasswords = passwordArray.map((item) =>
-        item._id === editingIndex ? { ...form, _id: item._id } : item
+        item._id === editingIndex ? updatedPassword : item
       );
       setPasswordArray(updatedPasswords);
-
-      // Update in backend
-      await fetchApi("PUT", { ...form, _id: editingIndex });
 
       setEditingIndex(null);
       setform({ site: "", username: "", password: "" });
@@ -183,12 +184,14 @@ const Manager = () => {
         theme: "colored",
       });
     } else {
-      // Add new password
-      const newPassword = { ...form, _id: Date.now().toString() };
-      setPasswordArray([...passwordArray, newPassword]);
-
-      // Save in backend
-      await fetchApi("POST", { ...form });
+      // Add new password with userId
+      const newPassword = { ...form, userId: user.id };
+      
+      // Save in backend first to get the proper _id
+      const savedPassword = await fetchApi("POST", newPassword);
+      
+      // Update local state with the saved password
+      setPasswordArray([...passwordArray, savedPassword]);
 
       setform({ site: "", username: "", password: "" });
       toast.success("✅ Password saved successfully!", {
