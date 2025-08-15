@@ -7,7 +7,7 @@ const Footer = () => {
       <div className="relative w-full bg-white/10 backdrop-blur-lg shadow-xl border-t border-white/20 flex flex-col items-center justify-center py-6">
         <p className="text-white/80 text-center text-sm font-medium">
           &copy; {new Date().getFullYear()} PassOP. 
-          All rights reserved.
+          All rights reserved BY SOM.
         </p>
         <a
           href="https://github.com/your-repo-url"
